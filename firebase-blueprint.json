@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "Session": {
+      "title": "User Bot Session",
+      "description": "Stores the current status and configuration of a user's bot.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID." },
+        "isRunning": { "type": "boolean", "description": "Whether the bot is currently running." },
+        "url": { "type": "string", "description": "The target URL." },
+        "visits": { "type": "number", "description": "Target number of visits." },
+        "proxyCount": { "type": "number", "description": "Number of proxies loaded." },
+        "screenshot": { "type": "string", "description": "Base64 encoded screenshot of the current page." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." }
+      },
+      "required": ["uid", "isRunning"]
+    },
+    "Log": {
+      "title": "Bot Log",
+      "description": "A single log entry for a user's bot.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID." },
+        "message": { "type": "string", "description": "The log message." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the log was created." }
+      },
+      "required": ["uid", "message", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/sessions/{uid}": {
+      "schema": "Session",
+      "description": "Current session state for a specific user."
+    },
+    "/logs/{logId}": {
+      "schema": "Log",
+      "description": "Historical logs for all users, filtered by UID."
+    }
+  }
+}

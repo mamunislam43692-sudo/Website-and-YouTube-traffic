@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    function isValidSession(data) {
+      return data.uid is string && data.uid.size() > 0 &&
+             data.isRunning is bool &&
+             (!('url' in data) || data.url is string) &&
+             (!('visits' in data) || data.age is number) &&
+             (!('proxyCount' in data) || data.proxyCount is number) &&
+             (!('screenshot' in data) || data.screenshot is string) &&
+             (!('updatedAt' in data) || data.updatedAt is string);
+    }
+    function isValidLog(data) {
+      return data.uid is string && data.uid.size() > 0 &&
+             data.message is string && data.message.size() < 1000 &&
+             data.timestamp is string;
+    }
+
+    // Sessions: Users can only read/write their own session document
+    match /sessions/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidSession(request.resource.data) && uidUnchanged();
+    }
+
+    // Logs: Users can only read/write their own logs
+    match /logs/{logId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidLog(request.resource.data) && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+  }
+}
